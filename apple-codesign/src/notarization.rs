@@ -168,12 +168,6 @@ impl Notarizer {
         Ok(Self::new(UnifiedApiKey::from_json_path(path)?.try_into()?))
     }
 
-    pub fn from_token(token: &str) -> Result<Self, AppleCodesignError> {
-        Ok(Self::new(ConnectTokenEncoder::from_token(
-            token.to_string(),
-        ))?)
-    }
-
     /// Attempt to notarize an asset defined by a filesystem path.
     ///
     /// The type of path is sniffed out and the appropriate notarization routine is called.

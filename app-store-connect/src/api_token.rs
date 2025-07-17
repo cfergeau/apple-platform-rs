@@ -46,8 +46,6 @@ pub struct ConnectTokenEncoder {
     key_id: String,
     issuer_id: String,
     encoding_key: EncodingKey,
-
-    token: AppStoreConnectToken,
 }
 
 impl ConnectTokenEncoder {
@@ -63,16 +61,6 @@ impl ConnectTokenEncoder {
             key_id,
             issuer_id,
             encoding_key,
-            token: "".to_string(),
-        }
-    }
-
-    pub fn from_token(token: String) -> Self {
-        Self {
-            key_id: "".to_string(),
-            issuer_id: "".to_string(),
-            encoding_key: EncodingKey::from_secret({ u8(0) }),
-            token,
         }
     }
 
