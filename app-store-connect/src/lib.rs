@@ -53,14 +53,17 @@ impl AppStoreConnectClient {
     }
 
     pub fn get_token(&self) -> Result<String> {
-        let mut token = self.token.lock().unwrap();
+        Ok(String::from("xxxx"))
+        /*
+                let mut token = self.token.lock().unwrap();
 
-        // TODO need to handle token expiration.
-        if token.is_none() {
-            token.replace(self.connect_token.new_token(300)?);
-        }
+                // TODO need to handle token expiration.
+                if token.is_none() {
+                    token.replace(self.connect_token.new_token(300)?);
+                }
 
-        Ok(token.as_ref().unwrap().clone())
+                Ok(token.as_ref().unwrap().clone())
+        */
     }
 
     pub fn send_request(&self, request: RequestBuilder) -> Result<Response> {
