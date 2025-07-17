@@ -15,7 +15,9 @@ and waiting on the availability of a notarization ticket.
 
 use {
     crate::{reader::PathType, AppleCodesignError},
-    app_store_connect::{notary_api, AppStoreConnectClient, ConnectTokenEncoder, UnifiedApiKey},
+    app_store_connect::{
+        notary_api, AppStoreConnectClient, ConnectTokenEncoder, TokenGenerator, UnifiedApiKey,
+    },
     apple_bundles::DirectoryBundle,
     aws_sdk_s3::config::{Credentials, Region},
     aws_smithy_types::byte_stream::ByteStream,
@@ -136,22 +138,24 @@ enum UploadKind {
 /// and react to that upload, then downloading a notarization "ticket" from Apple
 /// and incorporating it into the entity being signed.
 #[derive(Clone)]
-pub struct Notarizer {
-    token_encoder: ConnectTokenEncoder,
+pub struct Notarizer<T> {
+    token_encoder: T,
 
     /// How long to wait between polling the server for upload status.
     wait_poll_interval: Duration,
 }
 
-impl Notarizer {
+impl<T> Notarizer<T> {
     /// Construct a new instance.
-    fn new(token_encoder: ConnectTokenEncoder) -> Self {
+    fn new(token_encoder: T) -> Self {
         Self {
             token_encoder,
             wait_poll_interval: Duration::from_secs(3),
         }
     }
+}
 
+impl Notarizer<ConnectTokenEncoder> {
     /// Construct an instance from an API issuer ID and API key.
     pub fn from_api_key_id(
         issuer_id: impl ToString,
@@ -167,7 +171,12 @@ impl Notarizer {
     pub fn from_api_key(path: &Path) -> Result<Self, AppleCodesignError> {
         Ok(Self::new(UnifiedApiKey::from_json_path(path)?.try_into()?))
     }
+}
 
+impl<T> Notarizer<T>
+where
+    T: Clone + TokenGenerator,
+{
     /// Attempt to notarize an asset defined by a filesystem path.
     ///
     /// The type of path is sniffed out and the appropriate notarization routine is called.
@@ -253,8 +262,11 @@ impl Notarizer {
     }
 }
 
-impl Notarizer {
-    fn client(&self) -> Result<AppStoreConnectClient, AppleCodesignError> {
+impl<T> Notarizer<T>
+where
+    T: Clone + TokenGenerator,
+{
+    fn client(&self) -> Result<AppStoreConnectClient<T>, AppleCodesignError> {
         Ok(AppStoreConnectClient::new(self.token_encoder.clone())?)
     }
 
