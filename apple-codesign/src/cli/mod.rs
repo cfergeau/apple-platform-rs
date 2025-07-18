@@ -7,9 +7,6 @@ pub mod config;
 pub mod debug_commands;
 pub mod extract_commands;
 
-#[cfg(feature = "notarize")]
-use app_store_connect::{ConnectTokenEncoder, TokenGenerator};
-
 use {
     crate::{
         certificate::{
@@ -140,7 +137,7 @@ struct NotaryApi {
 #[cfg(feature = "notarize")]
 impl NotaryApi {
     /// Resolve a notarizer from arguments.
-    fn notarizer(&self) -> Result<Notarizer<TokenGenerator>, AppleCodesignError> {
+    fn notarizer(&self) -> Result<Notarizer, AppleCodesignError> {
         if let Some(api_key_path) = &self.api_key_path {
             Notarizer::from_api_key(api_key_path)
         } else if let (Some(issuer), Some(key)) = (&self.api_issuer, &self.api_key) {
@@ -2504,7 +2501,9 @@ pub fn main_impl() -> Result<(), AppleCodesignError> {
 
     let mut builder = env_logger::Builder::new();
 
-    builder.filter_level(log_level).parse_default_env();
+    builder
+        .filter_level(log_level)
+        .parse_default_env();
 
     // Disable log context except at higher log levels.
     if log_level <= LevelFilter::Info {

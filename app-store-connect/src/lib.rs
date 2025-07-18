@@ -21,24 +21,27 @@ use {
 };
 
 pub use crate::api_key::{InvalidPemPrivateKey, UnifiedApiKey};
-pub use crate::api_token::{
-    AppStoreConnectToken, ConnectTokenEncoder, MissingApiKey, TokenGenerator,
-};
+pub use crate::api_token::{AppStoreConnectToken, ConnectTokenEncoder, MissingApiKey};
 
 pub type Result<T> = anyhow::Result<T>;
 
 /// A client for App Store Connect API.
 ///
 /// The client isn't generic. Don't get any ideas.
-pub struct AppStoreConnectClient<T> {
+pub struct AppStoreConnectClient {
     client: Client,
-    connect_token: T,
+    connect_token: ConnectTokenEncoder,
     token: Mutex<Option<AppStoreConnectToken>>,
 }
 
-impl<T> AppStoreConnectClient<T> {
+impl AppStoreConnectClient {
+    pub fn from_json_path(path: &Path) -> Result<Self> {
+        let key = UnifiedApiKey::from_json_path(path)?;
+        AppStoreConnectClient::new(key.try_into()?)
+    }
+
     /// Create a new client to the App Store Connect API.
-    pub fn new(connect_token: T) -> Result<Self> {
+    pub fn new(connect_token: ConnectTokenEncoder) -> Result<Self> {
         let client = ClientBuilder::default()
             .user_agent("asconnect crate (https://crates.io/crates/asconnect)")
             .build()?;
@@ -48,9 +51,18 @@ impl<T> AppStoreConnectClient<T> {
             token: Mutex::new(None),
         })
     }
-}
 
-impl<T> AppStoreConnectClient<T> {
+    pub fn get_token(&self) -> Result<String> {
+        let mut token = self.token.lock().unwrap();
+
+        // TODO need to handle token expiration.
+        if token.is_none() {
+            token.replace(self.connect_token.new_token(300)?);
+        }
+
+        Ok(token.as_ref().unwrap().clone())
+    }
+
     pub fn send_request(&self, request: RequestBuilder) -> Result<Response> {
         let request = request.build()?;
         let method = request.method().to_string();
@@ -78,29 +90,6 @@ impl<T> AppStoreConnectClient<T> {
             }
             .into())
         }
-    }
-}
-
-impl AppStoreConnectClient<ConnectTokenEncoder> {
-    pub fn from_json_path(path: &Path) -> Result<Self> {
-        let key = UnifiedApiKey::from_json_path(path)?;
-        AppStoreConnectClient::new(key.try_into()?)
-    }
-}
-
-impl<T> AppStoreConnectClient<T>
-where
-    T: TokenGenerator,
-{
-    pub fn get_token(&self) -> Result<String> {
-        let mut token = self.token.lock().unwrap();
-
-        // TODO need to handle token expiration.
-        if token.is_none() {
-            token.replace(self.connect_token.new_token(300)?);
-        }
-
-        Ok(token.as_ref().unwrap().clone())
     }
 }
 

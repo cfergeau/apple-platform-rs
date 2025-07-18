@@ -5,15 +5,12 @@
 // except according to those terms.
 
 use crate::bundle_api::BundleIdPlatform;
-use crate::{AppStoreConnectClient, Result, TokenGenerator};
+use crate::{AppStoreConnectClient, Result};
 use serde::{Deserialize, Serialize};
 
 const APPLE_CERTIFICATE_URL: &str = "https://api.appstoreconnect.apple.com/v1/devices";
 
-impl<T> AppStoreConnectClient<T>
-where
-    T: TokenGenerator,
-{
+impl AppStoreConnectClient {
     pub fn register_device(
         &self,
         name: &str,

@@ -6,16 +6,12 @@
 
 use crate::{
     bundle_api::BundleIdResponse, certs_api::CertificatesResponse, AppStoreConnectClient, Result,
-    TokenGenerator,
 };
 use serde::{Deserialize, Serialize};
 
 const APPLE_PROFILES_URL: &str = "https://api.appstoreconnect.apple.com/v1/profiles";
 
-impl<T> AppStoreConnectClient<T>
-where
-    T: TokenGenerator,
-{
+impl AppStoreConnectClient {
     pub fn create_profile(
         &self,
         name: &str,

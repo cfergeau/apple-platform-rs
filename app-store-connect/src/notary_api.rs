@@ -9,7 +9,7 @@
 //! See also <https://developer.apple.com/documentation/notaryapi>.
 
 use {
-    crate::{AppStoreConnectClient, Result, TokenGenerator},
+    crate::{AppStoreConnectClient, Result},
     serde::{Deserialize, Serialize},
     serde_json::Value,
     thiserror::Error,
@@ -163,10 +163,7 @@ pub struct SubmissionLogResponse {
     pub meta: Value,
 }
 
-impl<T> AppStoreConnectClient<T>
-where
-    T: TokenGenerator,
-{
+impl AppStoreConnectClient {
     /// Create a submission to the Notary API.
     pub fn create_submission(
         &self,

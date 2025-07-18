@@ -4,7 +4,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::{AppStoreConnectClient, Result, TokenGenerator};
+use crate::{AppStoreConnectClient, Result};
 use base64::{engine::general_purpose::STANDARD as STANDARD_ENGINE, Engine};
 use rand::rngs::OsRng;
 use rsa::pkcs8::{EncodePrivateKey, LineEnding};
@@ -40,10 +40,7 @@ pub fn generate_signing_certificate(api_key: &Path, ty: CertificateType, pem: &P
 
 const APPLE_CERTIFICATE_URL: &str = "https://api.appstoreconnect.apple.com/v1/certificates";
 
-impl<T> AppStoreConnectClient<T>
-where
-    T: TokenGenerator,
-{
+impl AppStoreConnectClient {
     pub fn create_certificate(
         &self,
         csr: String,

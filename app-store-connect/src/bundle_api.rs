@@ -4,17 +4,14 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::{profile_api::ProfilesResponse, AppStoreConnectClient, Result, TokenGenerator};
+use crate::{profile_api::ProfilesResponse, AppStoreConnectClient, Result};
 use serde::{Deserialize, Serialize};
 
 const APPLE_BUNDLE_IDS_URL: &str = "https://api.appstoreconnect.apple.com/v1/bundleIds";
 const APPLE_BUNDLE_CAPABILITIES_URL: &str =
     "https://api.appstoreconnect.apple.com/v1/bundleIdCapabilities";
 
-impl<T> AppStoreConnectClient<T>
-where
-    T: TokenGenerator,
-{
+impl AppStoreConnectClient {
     pub fn register_bundle_id(&self, identifier: &str, name: &str) -> Result<BundleIdResponse> {
         let token = self.get_token()?;
         let body = BundleIdCreateRequest {
