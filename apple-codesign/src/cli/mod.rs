@@ -132,6 +132,14 @@ struct NotaryApi {
     #[arg(long, requires = "api_issuer")]
     /// App Store Connect API Key ID
     api_key: Option<String>,
+
+    /// Developer Apple ID
+    #[arg(long, value_name = "PATH", requires = "apple_id")]
+    app_password_path: Option<PathBuf>,
+
+    /// Path to a file containing an app-specific password to sign in to your Apple account
+    #[arg(long, requires = "app_password_path")]
+    apple_id: Option<String>,
 }
 
 #[cfg(feature = "notarize")]
@@ -142,6 +150,10 @@ impl NotaryApi {
             Notarizer::from_api_key(api_key_path)
         } else if let (Some(issuer), Some(key)) = (&self.api_issuer, &self.api_key) {
             Notarizer::from_api_key_id(issuer, key)
+        } else if let (Some(apple_id), Some(app_password_path)) =
+            (&self.apple_id, &self.app_password_path)
+        {
+            Notarizer::from_asp(apple_id, app_password_path)
         } else {
             Err(AppleCodesignError::NotarizeNoAuthCredentials)
         }
@@ -2501,9 +2513,7 @@ pub fn main_impl() -> Result<(), AppleCodesignError> {
 
     let mut builder = env_logger::Builder::new();
 
-    builder
-        .filter_level(log_level)
-        .parse_default_env();
+    builder.filter_level(log_level).parse_default_env();
 
     // Disable log context except at higher log levels.
     if log_level <= LevelFilter::Info {

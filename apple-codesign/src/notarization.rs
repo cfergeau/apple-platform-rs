@@ -24,6 +24,7 @@ use {
     log::warn,
     sha2::Digest,
     std::{
+        fs,
         fs::File,
         io::{Read, Seek, SeekFrom, Write},
         path::{Path, PathBuf},
@@ -178,10 +179,17 @@ impl Notarizer {
         ))
     }
 
-    pub fn from_token(token: impl ToString) -> Result<Self, AppleCodesignError> {
-        Ok(Self::from_asp_token_generator(
-            AspTokenGenerator::from_token(token.to_string()),
-        ))
+    pub fn from_asp(
+        _apple_id: impl ToString,
+        app_password_path: &Path,
+    ) -> Result<Self, AppleCodesignError> {
+        let token = fs::read_to_string(app_password_path);
+        match token {
+            Err(err) => Err(AppleCodesignError::Io(err)),
+            Ok(token_str) => Ok(Self::from_asp_token_generator(
+                AspTokenGenerator::from_token(token_str),
+            )),
+        }
     }
 
     /// Construct an instance from a file containing a JSON encoded API key.
