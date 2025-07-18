@@ -15,7 +15,9 @@ and waiting on the availability of a notarization ticket.
 
 use {
     crate::{reader::PathType, AppleCodesignError},
-    app_store_connect::{notary_api, AppStoreConnectClient, ConnectTokenEncoder, UnifiedApiKey},
+    app_store_connect::{
+        notary_api, AppStoreConnectClient, AspTokenGenerator, ConnectTokenEncoder, UnifiedApiKey,
+    },
     apple_bundles::DirectoryBundle,
     aws_sdk_s3::config::{Credentials, Region},
     aws_smithy_types::byte_stream::ByteStream,
@@ -130,6 +132,12 @@ enum UploadKind {
     Path(PathBuf),
 }
 
+#[derive(Clone)]
+enum TokenEncoder {
+    ConnectTokenEncoder(ConnectTokenEncoder),
+    AspTokenGenerator(AspTokenGenerator),
+}
+
 /// An entity for performing notarizations.
 ///
 /// Notarization works by uploading content to Apple, waiting for Apple to inspect
@@ -137,7 +145,7 @@ enum UploadKind {
 /// and incorporating it into the entity being signed.
 #[derive(Clone)]
 pub struct Notarizer {
-    token_encoder: ConnectTokenEncoder,
+    token_encoder: TokenEncoder,
 
     /// How long to wait between polling the server for upload status.
     wait_poll_interval: Duration,
@@ -145,11 +153,19 @@ pub struct Notarizer {
 
 impl Notarizer {
     /// Construct a new instance.
-    fn new(token_encoder: ConnectTokenEncoder) -> Self {
+    fn new(token_encoder: TokenEncoder) -> Self {
         Self {
             token_encoder,
             wait_poll_interval: Duration::from_secs(3),
         }
+    }
+
+    pub fn from_connect_token_encoder(token_encoder: ConnectTokenEncoder) -> Self {
+        Self::new(TokenEncoder::ConnectTokenEncoder(token_encoder))
+    }
+
+    pub fn from_asp_token_generator(asp_token_generator: AspTokenGenerator) -> Self {
+        Self::new(TokenEncoder::AspTokenGenerator(asp_token_generator))
     }
 
     /// Construct an instance from an API issuer ID and API key.
@@ -157,15 +173,22 @@ impl Notarizer {
         issuer_id: impl ToString,
         key_id: impl ToString,
     ) -> Result<Self, AppleCodesignError> {
-        Ok(Self::new(ConnectTokenEncoder::from_api_key_id(
-            key_id.to_string(),
-            issuer_id.to_string(),
-        )?))
+        Ok(Self::from_connect_token_encoder(
+            ConnectTokenEncoder::from_api_key_id(key_id.to_string(), issuer_id.to_string())?,
+        ))
+    }
+
+    pub fn from_token(token: impl ToString) -> Result<Self, AppleCodesignError> {
+        Ok(Self::from_asp_token_generator(
+            AspTokenGenerator::from_token(token.to_string()),
+        ))
     }
 
     /// Construct an instance from a file containing a JSON encoded API key.
     pub fn from_api_key(path: &Path) -> Result<Self, AppleCodesignError> {
-        Ok(Self::new(UnifiedApiKey::from_json_path(path)?.try_into()?))
+        Ok(Self::from_connect_token_encoder(
+            UnifiedApiKey::from_json_path(path)?.try_into()?,
+        ))
     }
 
     /// Attempt to notarize an asset defined by a filesystem path.
@@ -255,7 +278,14 @@ impl Notarizer {
 
 impl Notarizer {
     fn client(&self) -> Result<AppStoreConnectClient, AppleCodesignError> {
-        Ok(AppStoreConnectClient::new(self.token_encoder.clone())?)
+        match &self.token_encoder {
+            TokenEncoder::ConnectTokenEncoder(token_encoder) => {
+                Ok(AppStoreConnectClient::new(token_encoder.clone())?)
+            }
+            TokenEncoder::AspTokenGenerator(token_encoder) => {
+                Ok(AppStoreConnectClient::new(token_encoder.clone())?)
+            }
+        }
     }
 
     /// Tell the notary service to expect an upload to S3.

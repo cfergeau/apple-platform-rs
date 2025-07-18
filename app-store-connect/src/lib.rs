@@ -22,7 +22,7 @@ use {
 
 pub use crate::api_key::{InvalidPemPrivateKey, UnifiedApiKey};
 pub use crate::api_token::{
-    AppStoreConnectToken, ConnectTokenEncoder, MissingApiKey, TokenGenerator,
+    AppStoreConnectToken, AspTokenGenerator, ConnectTokenEncoder, MissingApiKey, TokenGenerator,
 };
 
 pub type Result<T> = anyhow::Result<T>;

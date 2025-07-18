@@ -29,6 +29,27 @@ pub trait TokenGenerator {
     fn new_token(&self, duration: u64) -> Result<AppStoreConnectToken>;
 }
 
+/// Represents a token obtained from the /notary/v2/asp? endpoint using an app password as
+/// described in
+/// https://github.com/indygreg/apple-platform-rs/issues/23
+/// https://support.apple.com/en-us/102654
+#[derive(Clone)]
+pub struct AspTokenGenerator {
+    token: AppStoreConnectToken,
+}
+
+impl AspTokenGenerator {
+    pub fn from_token(token: String) -> AspTokenGenerator {
+        Self { token }
+    }
+}
+
+impl TokenGenerator for AspTokenGenerator {
+    fn new_token(&self, _: u64) -> Result<AppStoreConnectToken> {
+        Ok(String::from(&self.token))
+    }
+}
+
 /// Represents a private key used to create JWT tokens for use with App Store Connect.
 ///
 /// See https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api
