@@ -25,6 +25,10 @@ struct ConnectTokenRequest {
 /// A JWT Token for use with App Store Connect API.
 pub type AppStoreConnectToken = String;
 
+pub trait TokenGenerator {
+    fn new_token(&self, duration: u64) -> Result<AppStoreConnectToken>;
+}
+
 /// Represents a private key used to create JWT tokens for use with App Store Connect.
 ///
 /// See https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api
@@ -117,12 +121,14 @@ impl ConnectTokenEncoder {
 
         Err(MissingApiKey.into())
     }
+}
 
+impl TokenGenerator for ConnectTokenEncoder {
     /// Mint a new JWT token.
     ///
     /// Using the private key and key metadata bound to this instance, we issue a new JWT
     /// for the requested duration.
-    pub fn new_token(&self, duration: u64) -> Result<AppStoreConnectToken> {
+    fn new_token(&self, duration: u64) -> Result<AppStoreConnectToken> {
         let header = Header {
             kid: Some(self.key_id.clone()),
             alg: Algorithm::ES256,
