@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 const APPLE_PROFILES_URL: &str = "https://api.appstoreconnect.apple.com/v1/profiles";
 
-impl AppStoreConnectClient {
+impl AppStoreConnectClient<'_> {
     pub fn create_profile(
         &self,
         name: &str,

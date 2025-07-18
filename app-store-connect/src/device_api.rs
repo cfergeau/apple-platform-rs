@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 const APPLE_CERTIFICATE_URL: &str = "https://api.appstoreconnect.apple.com/v1/devices";
 
-impl AppStoreConnectClient {
+impl AppStoreConnectClient<'_> {
     pub fn register_device(
         &self,
         name: &str,

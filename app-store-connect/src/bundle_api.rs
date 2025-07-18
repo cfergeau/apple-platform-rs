@@ -11,7 +11,7 @@ const APPLE_BUNDLE_IDS_URL: &str = "https://api.appstoreconnect.apple.com/v1/bun
 const APPLE_BUNDLE_CAPABILITIES_URL: &str =
     "https://api.appstoreconnect.apple.com/v1/bundleIdCapabilities";
 
-impl AppStoreConnectClient {
+impl AppStoreConnectClient<'_> {
     pub fn register_bundle_id(&self, identifier: &str, name: &str) -> Result<BundleIdResponse> {
         let token = self.get_token()?;
         let body = BundleIdCreateRequest {

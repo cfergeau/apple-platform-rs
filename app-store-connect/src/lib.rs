@@ -30,26 +30,28 @@ pub type Result<T> = anyhow::Result<T>;
 /// A client for App Store Connect API.
 ///
 /// The client isn't generic. Don't get any ideas.
-pub struct AppStoreConnectClient {
+pub struct AppStoreConnectClient<'a> {
     client: Client,
-    connect_token: ConnectTokenEncoder,
+    connect_token: Box<dyn TokenGenerator + 'a>,
     token: Mutex<Option<AppStoreConnectToken>>,
 }
 
-impl AppStoreConnectClient {
+impl<'a> AppStoreConnectClient<'a> {
     pub fn from_json_path(path: &Path) -> Result<Self> {
         let key = UnifiedApiKey::from_json_path(path)?;
-        AppStoreConnectClient::new(key.try_into()?)
+        let connect_token: ConnectTokenEncoder = key.try_into()?;
+        AppStoreConnectClient::new(connect_token)
     }
 
     /// Create a new client to the App Store Connect API.
-    pub fn new(connect_token: ConnectTokenEncoder) -> Result<Self> {
+    pub fn new<T: TokenGenerator + 'a>(connect_token: T) -> Result<Self> {
         let client = ClientBuilder::default()
             .user_agent("asconnect crate (https://crates.io/crates/asconnect)")
             .build()?;
         Ok(Self {
             client,
-            connect_token,
+            connect_token: Box::new(connect_token),
+
             token: Mutex::new(None),
         })
     }

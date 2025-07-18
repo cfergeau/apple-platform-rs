@@ -163,7 +163,7 @@ pub struct SubmissionLogResponse {
     pub meta: Value,
 }
 
-impl AppStoreConnectClient {
+impl AppStoreConnectClient<'_> {
     /// Create a submission to the Notary API.
     pub fn create_submission(
         &self,

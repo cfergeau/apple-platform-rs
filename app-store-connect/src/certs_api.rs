@@ -40,7 +40,7 @@ pub fn generate_signing_certificate(api_key: &Path, ty: CertificateType, pem: &P
 
 const APPLE_CERTIFICATE_URL: &str = "https://api.appstoreconnect.apple.com/v1/certificates";
 
-impl AppStoreConnectClient {
+impl AppStoreConnectClient<'_> {
     pub fn create_certificate(
         &self,
         csr: String,
