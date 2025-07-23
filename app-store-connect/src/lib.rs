@@ -68,14 +68,18 @@ impl<'a> AppStoreConnectClient<'a> {
     }
 
     pub fn send_request(&self, request: RequestBuilder) -> Result<Response> {
+        log::warn!("send_request");
         let request = request.build()?;
+        log::warn!("after request.build");
         let method = request.method().to_string();
         let url = request.url().to_string();
 
+        log::warn!("send_request");
         log::debug!("{} {}", request.method(), url);
 
         let response = self.client.execute(request)?;
 
+        log::warn!("is_success?");
         if response.status().is_success() {
             Ok(response)
         } else {

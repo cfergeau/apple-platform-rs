@@ -10,6 +10,7 @@
 
 use {
     crate::{AppStoreConnectClient, Result},
+    log::warn,
     serde::{Deserialize, Serialize},
     serde_json::Value,
     thiserror::Error,
@@ -177,6 +178,8 @@ impl AppStoreConnectClient<'_> {
             sha256: sha256.to_string(),
             submission_name: submission_name.to_string(),
         };
+        warn!("req send_request {}", &token);
+        // FIXME: need to check error after each step to understand what’s wrong
         let req = self
             .client
             .post(APPLE_NOTARY_SUBMIT_SOFTWARE_URL)
@@ -185,7 +188,11 @@ impl AppStoreConnectClient<'_> {
             .header("Content-Type", "application/json")
             .json(&body);
 
-        Ok(self.send_request(req)?.json()?)
+        let foo = self.send_request(req)?;
+        warn!("after req send_request");
+        let js = foo.json()?;
+        warn!("after json");
+        Ok(js)
     }
 
     /// Fetch the status of a Notary API submission.
